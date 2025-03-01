@@ -36,19 +36,28 @@ function generate_uuid(): string {
 function create_project(string $name, int $user_id) {
     global $file;
     
+    // Load existing projects safely
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
+    if (!is_array($projects)) {
+        $projects = []; // Ensure it's an array to prevent data loss
+    }
+
+    // Append the new project
     $project = [
         "name" => $name,
         "created" => date("Y-m-d H:i:s"),
         "uuid" => generate_uuid(),
-        "user_id" => $user_id, // Store the user ID
+        "user_id" => $user_id,
         "sections" => []
     ];
     
     $projects[] = $project;
+
+    // Save updated data
     file_put_contents($file, json_encode($projects, JSON_PRETTY_PRINT));
 }
+
 
 function get_all_projects() {
     global $file;
