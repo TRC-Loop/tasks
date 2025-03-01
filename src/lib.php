@@ -1,6 +1,11 @@
 <?php
 require_once "config.php";
 
+// Start the session only if it's not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 class ToDoData {
     public string $name;
     public string $uuid;
@@ -28,7 +33,7 @@ function generate_uuid(): string {
     return bin2hex(random_bytes(24));
 }
 
-function create_project(string $name) {
+function create_project(string $name, int $user_id) {
     global $file;
     
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
@@ -37,6 +42,7 @@ function create_project(string $name) {
         "name" => $name,
         "created" => date("Y-m-d H:i:s"),
         "uuid" => generate_uuid(),
+        "user_id" => $user_id, // Store the user ID
         "sections" => []
     ];
     
@@ -46,11 +52,29 @@ function create_project(string $name) {
 
 function get_all_projects() {
     global $file;
-    return file_exists($file) ? json_decode(file_get_contents($file), true) : [];
+    
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return []; // Return an empty array if user_id is not set
+    }
+
+    $user_id = $_SESSION["user_id"]; // Get the user_id from the session
+    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
+    
+    return array_filter($projects, fn($p) => $p["user_id"] === $user_id);
 }
+
 
 function get_all_sections(string $project_uuid) {
     global $file;
+    
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return []; // Return an empty array if user_id is not set
+    }
+
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
     foreach ($projects as $project) {
@@ -63,6 +87,13 @@ function get_all_sections(string $project_uuid) {
 
 function get_all_todos(string $project_uuid, string $section_uuid) {
     global $file;
+    
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return []; // Return an empty array if user_id is not set
+    }
+
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
     foreach ($projects as $project) {
@@ -77,18 +108,31 @@ function get_all_todos(string $project_uuid, string $section_uuid) {
     return [];
 }
 
-function delete_project(string $uuid) {
+function delete_project(string $uuid, string $user_id) {
     global $file;
     
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return; // Exit function if user_id is not set
+    }
+
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
-    $projects = array_filter($projects, fn($p) => $p["uuid"] !== $uuid);
+    $projects = array_filter($projects, fn($p) => !($p["uuid"] === $uuid && $p["user_id"] === $user_id));
+
     file_put_contents($file, json_encode(array_values($projects), JSON_PRETTY_PRINT));
 }
 
 function create_section(string $project_uuid, string $project_name) {
     global $file;
     
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return; // Exit function if user_id is not set
+    }
+
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
     foreach ($projects as &$project) {
@@ -109,6 +153,12 @@ function create_section(string $project_uuid, string $project_name) {
 function delete_section(string $project_uuid, string $section_uuid) {
     global $file;
     
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return; // Exit function if user_id is not set
+    }
+
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
     foreach ($projects as &$project) {
@@ -123,6 +173,12 @@ function delete_section(string $project_uuid, string $section_uuid) {
 function create_todo(string $project_uuid, string $section_uuid, string $name) {
     global $file;
     
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return; // Exit function if user_id is not set
+    }
+
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
     foreach ($projects as &$project) {
@@ -149,6 +205,12 @@ function create_todo(string $project_uuid, string $section_uuid, string $name) {
 function delete_todo(string $project_uuid, string $section_uuid, string $todo_uuid) {
     global $file;
     
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return; // Exit function if user_id is not set
+    }
+
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
     foreach ($projects as &$project) {
@@ -171,6 +233,12 @@ function delete_todo(string $project_uuid, string $section_uuid, string $todo_uu
 function mark_todo_done(string $project_uuid, string $section_uuid, string $todo_uuid) {
     global $file;
     
+    // Ensure the user_id exists in the session before using it
+    if (!isset($_SESSION["user_id"])) {
+        error_log("user_id is not set in the session.");
+        return; // Exit function if user_id is not set
+    }
+
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
     
     foreach ($projects as &$project) {

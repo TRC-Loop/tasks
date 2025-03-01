@@ -94,7 +94,7 @@ if (!empty($search_term)) {
 <body>
   <div class="container mt-4">
     <h1>Project: <?php echo htmlspecialchars($project["name"]); ?></h1>
-    <a href="index.php" class="btn btn-secondary mb-3">
+    <a href="projects.php" class="btn btn-secondary mb-3">
       <i class="ti ti-arrow-left"></i> Back to Projects
     </a>
 
