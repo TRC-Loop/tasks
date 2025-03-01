@@ -25,7 +25,7 @@ class ProjectData {
 }
 
 function generate_uuid(): string {
-    return bin2hex(random_bytes(32));
+    return bin2hex(random_bytes(24));
 }
 
 function create_project(string $name) {
