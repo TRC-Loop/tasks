@@ -29,7 +29,7 @@ Tasks is a basic, file-based task management application built with PHP, Bootstr
     *   Ensure you have PHP 7.4 or higher installed.
     *   Verify that the `json` extension is enabled in your `php.ini` file.
 
-3.  **Configure `config.php`:**xw
+3.  **Configure `config.php`:**
     *   Modify the `$file` variable to point to the desired location for your data file (e.g., `data.json`).  Make sure the web server has write permissions to this file.
 
     ```php
