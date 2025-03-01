@@ -3,6 +3,6 @@
 date_default_timezone_set('Europe/Berlin');
 setlocale(LC_TIME, "de_DE.UTF-8");
 
-$file = "todos.json";
-const USERS_FILE = 'users.json';
+$file = "data/todos.json";
+const USERS_FILE = 'data/users.json';
 ?>
