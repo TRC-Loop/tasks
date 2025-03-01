@@ -67,7 +67,7 @@ $projects = get_all_projects();
           <div class="card">
             <div class="card-body">
               <h5 class="card-title"><?php echo htmlspecialchars($project["name"]); ?></h5>
-              <a href="project.php?uuid=<?php echo htmlspecialchars($project["uuid"]); ?>" class="btn btn-primary">View Project</a>
+              <a href="/project.php?uuid=<?php echo htmlspecialchars($project["uuid"]); ?>" class="btn btn-primary">View Project</a>
 
               <!-- Delete Button -->
               <button class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteModal<?php echo htmlspecialchars($project["uuid"]); ?>">

@@ -13,6 +13,7 @@ class ToDoData {
 class SectionData {
     public ?array $todos = [];
     public string $uuid;
+    public string $name;
     public string $created;
 }
 
@@ -24,7 +25,7 @@ class ProjectData {
 }
 
 function generate_uuid(): string {
-    return bin2hex(random_bytes(16));
+    return bin2hex(random_bytes(32));
 }
 
 function create_project(string $name) {
@@ -85,7 +86,7 @@ function delete_project(string $uuid) {
     file_put_contents($file, json_encode(array_values($projects), JSON_PRETTY_PRINT));
 }
 
-function create_section(string $project_uuid) {
+function create_section(string $project_uuid, string $project_name) {
     global $file;
     
     $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
@@ -93,6 +94,7 @@ function create_section(string $project_uuid) {
     foreach ($projects as &$project) {
         if ($project["uuid"] === $project_uuid) {
             $section = [
+                "name" => $project_name,
                 "uuid" => generate_uuid(),
                 "created" => date("Y-m-d H:i:s"),
                 "todos" => []
