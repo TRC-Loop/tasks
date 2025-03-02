@@ -2,6 +2,7 @@
 session_start();
 
 require_once "config.php";
+require_once "userlib.php";
 require_once "lib.php";
 
 // Ensure user is logged in
@@ -11,6 +12,9 @@ if (!isset($_SESSION["user_id"])) {
 }
 
 $user_id = $_SESSION["user_id"];
+
+// Fetch user data
+$user = get_user($user_id);
 
 // Handle project creation
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["create_project"]) && isset($_POST["project_name"])) {
@@ -60,9 +64,34 @@ $projects = get_all_projects();
       cursor: pointer;
       box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     }
+    .top-bar {
+      background-color: #f8f9fa;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+    }
+    .top-bar .user-info {
+      display: flex;
+      align-items: center;
+    }
+    .top-bar .user-info img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="user-info">
+      <span>Welcome back, <?php echo htmlspecialchars($user->name); ?></span>
+    </div>
+  </div>
+
   <div class="container mt-4">
     <div class="row row-cols-1 row-cols-md-3 g-4">
       <?php foreach ($projects as $project) : ?>

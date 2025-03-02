@@ -49,7 +49,6 @@ if (
 }
 
 // Handle marking todo as done (or not done)
-// Handle marking todo as done (or not done)
 if (
   $_SERVER["REQUEST_METHOD"] === "POST" &&
   isset($_POST["complete_todo"]) &&
@@ -59,12 +58,11 @@ if (
   $completed = isset($_POST["completed"]) && $_POST["completed"] == "1"; // 1 for completed, 0 for not completed
 
   // Update the todo completion status in the database
-  mark_todo_done($project_uuid, $section_uuid, $todo_uuid, $completed);
+  mark_todo_done($project_uuid, $section_uuid, $todo_uuid);
 
   header("Location: section.php?project_uuid=" . urlencode($project_uuid) . "&section_uuid=" . urlencode($section_uuid));
   exit();
 }
-
 
 // Get all todos for the section
 $todos = get_all_todos($project_uuid, $section_uuid);
@@ -82,7 +80,12 @@ if (!empty($search_term)) {
   });
 }
 
-// Get project and section details (you might want to add functions for this in lib.php)
+// Sort todos so that completed tasks are at the bottom
+usort($todos, function ($a, $b) {
+  return $a['completed'] <=> $b['completed'];
+});
+
+// Get project and section details
 $projects = get_all_projects();
 $project = null;
 foreach ($projects as $p) {
@@ -109,7 +112,6 @@ if (!$section) {
   die("Section not found.");
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">

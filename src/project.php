@@ -70,8 +70,11 @@ if (!empty($search_term)) {
   <meta charset="UTF-8">
   <meta name="robots" content="noindex">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.30.0/dist/tabler-icons.min.css">
   <title>Project: <?php echo htmlspecialchars($project["name"]); ?></title>
   <style>
@@ -103,7 +106,8 @@ if (!empty($search_term)) {
     <form method="GET" action="" class="mb-3">
       <div class="input-group">
         <input type="hidden" name="uuid" value="<?php echo htmlspecialchars($project_uuid); ?>">
-        <input type="text" class="form-control" placeholder="Search sections..." name="search" value="<?php echo htmlspecialchars($search_term); ?>">
+        <input type="text" class="form-control" placeholder="Search sections..." name="search"
+          value="<?php echo htmlspecialchars($search_term); ?>">
         <button class="btn btn-outline-secondary" type="submit" id="button-search">
           <i class="ti ti-search"></i>
         </button>
@@ -111,32 +115,52 @@ if (!empty($search_term)) {
     </form>
 
     <div class="row row-cols-1 row-cols-md-2 g-4">
-      <?php if (empty($sections)) : ?>
+      <?php if (empty($sections)): ?>
         <div class="col">
           <p>No sections yet. Create one to get started!</p>
         </div>
-      <?php else : ?>
-        <?php foreach ($sections as $section) : ?>
+      <?php else: ?>
+        <?php foreach ($sections as $section): ?>
+          <?php
+          // Get the count of todos in this section
+          $todos = get_all_todos($project_uuid, $section['uuid']);
+          $todo_count = count($todos);
+
+          // Get the count of completed todos in this section
+          $completed_todos = array_filter($todos, function($todo) {
+            return $todo['completed'] == 1;  // Check if the todo is completed
+          });
+          $completed_count = count($completed_todos);  // Count completed todos
+          ?>
           <div class="col">
             <div class="card">
               <div class="card-body">
                 <h5 class="card-title"><?php echo htmlspecialchars($section["name"]); ?></h5>
-                <a href="section.php?project_uuid=<?php echo htmlspecialchars($project_uuid); ?>&section_uuid=<?php echo htmlspecialchars($section["uuid"]); ?>" class="btn btn-primary">View Section</a>
+                <a href="section.php?project_uuid=<?php echo htmlspecialchars($project_uuid); ?>&section_uuid=<?php echo htmlspecialchars($section["uuid"]); ?>"
+                  class="btn btn-primary">View Section</a>
 
                 <!-- Delete Button -->
-                <button class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteModal<?php echo htmlspecialchars($section["uuid"]); ?>">
+                <button class="btn btn-danger ms-2" data-bs-toggle="modal"
+                  data-bs-target="#deleteModal<?php echo htmlspecialchars($section["uuid"]); ?>">
                   <i class="ti ti-trash"></i>
                 </button>
               </div>
               <div class="card-footer text-muted d-flex align-items-center" style="font-size: 0.9rem;">
                 <i class="ti ti-calendar-plus" style="margin-right: 5px;"></i>
                 <?php echo htmlspecialchars($section["created"]); ?>
+
+                <!-- Completed todos out of total todos -->
+                <span class="ms-auto d-flex align-items-center">
+                  <i class="ti ti-checkbox" style="margin-right: 5px;"></i>
+                  <span><?php echo $completed_count . " / " . $todo_count; ?> completed</span>
+                </span>
               </div>
             </div>
           </div>
 
           <!-- Modal for Delete Confirmation -->
-          <div class="modal fade" id="deleteModal<?php echo htmlspecialchars($section["uuid"]); ?>" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+          <div class="modal fade" id="deleteModal<?php echo htmlspecialchars($section["uuid"]); ?>" tabindex="-1"
+            aria-labelledby="deleteModalLabel" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
@@ -169,7 +193,8 @@ if (!empty($search_term)) {
   </button>
 
   <!-- Modal for Section Creation -->
-  <div class="modal fade" id="createSectionModal" tabindex="-1" aria-labelledby="createSectionModalLabel" aria-hidden="true">
+  <div class="modal fade" id="createSectionModal" tabindex="-1" aria-labelledby="createSectionModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -177,7 +202,7 @@ if (!empty($search_term)) {
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <?php if (isset($error_message)) : ?>
+          <?php if (isset($error_message)): ?>
             <div class="alert alert-danger"><?php echo htmlspecialchars($error_message); ?></div>
           <?php endif; ?>
           <form method="POST" action="">

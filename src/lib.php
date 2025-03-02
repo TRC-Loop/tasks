@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-function get_db_connection() {
+function get_db_connection_projects() {
   global $PROJECTS_DB;
     $db = new SQLite3($PROJECTS_DB);
     $db->exec("CREATE TABLE IF NOT EXISTS projects (
@@ -39,7 +39,7 @@ function generate_uuid(): string {
 }
 
 function create_project(string $name, int $user_id) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("INSERT INTO projects (uuid, name, created, user_id) VALUES (?, ?, ?, ?)");
     $uuid = generate_uuid();
     $stmt->bindValue(1, $uuid);
@@ -52,7 +52,7 @@ function create_project(string $name, int $user_id) {
 function get_all_projects() {
     if (!isset($_SESSION["user_id"])) return [];
 
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("SELECT * FROM projects WHERE user_id = ?");
     $stmt->bindValue(1, $_SESSION["user_id"]);
     $result = $stmt->execute();
@@ -64,7 +64,7 @@ function get_all_projects() {
 }
 
 function get_all_sections(string $project_uuid) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("SELECT * FROM sections WHERE project_uuid = ?");
     $stmt->bindValue(1, $project_uuid);
     $result = $stmt->execute();
@@ -76,7 +76,7 @@ function get_all_sections(string $project_uuid) {
 }
 
 function get_all_todos(string $project_uuid, string $section_uuid) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("SELECT * FROM todos WHERE section_uuid = ?");
     $stmt->bindValue(1, $section_uuid);
     $result = $stmt->execute();
@@ -88,7 +88,7 @@ function get_all_todos(string $project_uuid, string $section_uuid) {
 }
 
 function delete_project(string $uuid, int $user_id) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("DELETE FROM projects WHERE uuid = ? AND user_id = ?");
     $stmt->bindValue(1, $uuid);
     $stmt->bindValue(2, $user_id);
@@ -96,7 +96,7 @@ function delete_project(string $uuid, int $user_id) {
 }
 
 function create_section(string $project_uuid, string $name) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("INSERT INTO sections (uuid, name, created, project_uuid) VALUES (?, ?, ?, ?)");
     $stmt->bindValue(1, generate_uuid());
     $stmt->bindValue(2, $name);
@@ -106,14 +106,14 @@ function create_section(string $project_uuid, string $name) {
 }
 
 function delete_section(string $project_uuid, string $section_uuid) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("DELETE FROM sections WHERE uuid = ?");
     $stmt->bindValue(1, $section_uuid);
     $stmt->execute();
 }
 
 function create_todo(string $project_uuid, string $section_uuid, string $name) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("INSERT INTO todos (uuid, name, created, completed, completed_when, deleted, section_uuid) VALUES (?, ?, ?, 0, '', 0, ?)");
     $stmt->bindValue(1, generate_uuid());
     $stmt->bindValue(2, $name);
@@ -123,14 +123,14 @@ function create_todo(string $project_uuid, string $section_uuid, string $name) {
 }
 
 function delete_todo(string $project_uuid, string $section_uuid, string $todo_uuid) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
     $stmt = $db->prepare("UPDATE todos SET deleted = 1 WHERE uuid = ?");
     $stmt->bindValue(1, $todo_uuid);
     $stmt->execute();
 }
 
 function mark_todo_done(string $project_uuid, string $section_uuid, string $todo_uuid) {
-    $db = get_db_connection();
+    $db = get_db_connection_projects();
 
     // Check current completion status
     $stmt = $db->prepare("SELECT completed FROM todos WHERE uuid = ?");
