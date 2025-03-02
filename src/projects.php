@@ -38,6 +38,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["uuid"])) {
 
 // Get projects only for the logged-in user
 $projects = get_all_projects();
+
+// Check if there are no projects
+$no_projects = empty($projects);
 ?>
 
 <!DOCTYPE html>
@@ -64,6 +67,7 @@ $projects = get_all_projects();
       cursor: pointer;
       box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     }
+
     .top-bar {
       background-color: #f8f9fa;
       padding: 10px 20px;
@@ -76,12 +80,24 @@ $projects = get_all_projects();
       display: flex;
       align-items: center;
     }
-    .top-bar .user-info img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      margin-right: 10px;
+
+    /* Arrow and text pointing to the button */
+    .arrow-pointer {
+      position: fixed;
+      bottom: 250px; 
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.75);
+      color: white;
+      padding: 20px;
+      padding-bottom: 5px;
+      border-radius: 8px;
+      font-size: 18px;
+      z-index: 1000;
+      width: 250px;
+      text-align: center;
     }
+
   </style>
 </head>
 <body>
@@ -133,10 +149,20 @@ $projects = get_all_projects();
     </div>
   </div>
 
+  <!-- If there are no projects, show the arrow and text -->
+  <?php if ($no_projects): ?>
+    <div class="arrow-pointer">
+      Start by creating a new project!
+      <p style="rotate: -45deg; font-size: 40px;">↓</p>
+    </div>
+  <?php endif; ?>
+
+  <!-- Floating button for creating a project -->
   <button class="floating-btn" data-bs-toggle="modal" data-bs-target="#createProjectModal">
     <i class="ti ti-plus"></i>
   </button>
 
+  <!-- Modal for creating a project -->
   <div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
