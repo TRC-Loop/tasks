@@ -143,6 +143,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 By default, you get a limit of 5 Projects, 2 Sections per Project, and 20 Todos per Section. If you need more, contact 
                 <a href="mailto:ak@stellar-code.com" style="color: lightgray;">ak@stellar-code.com</a>
             </p>
+            <p class="text-center mt-2">This Site uses Cookies.</p>
         </form>
     </div>
 </div>
