@@ -134,7 +134,7 @@ $no_projects = empty($projects);
                 <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-              <div class="modal-body">Are you sure you want to delete this project?</div>
+              <div class="modal-body">Are you sure you want to delete this project? This will delete all Sections and Todos. THERE IS NO UNDO!</div>
               <div class="modal-footer">
                 <form method="POST" action="">
                   <input type="hidden" name="uuid" value="<?php echo htmlspecialchars($project["uuid"]); ?>">
