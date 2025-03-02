@@ -158,4 +158,12 @@ function mark_todo_done(string $project_uuid, string $section_uuid, string $todo
     }
 }
 
+function update_todo_name(string $todo_uuid, string $new_name) {
+    $db = get_db_connection_projects();
+    $stmt = $db->prepare("UPDATE todos SET name = ? WHERE uuid = ?");
+    $stmt->bindValue(1, $new_name);
+    $stmt->bindValue(2, $todo_uuid);
+    $stmt->execute();
+}
+
 ?>
