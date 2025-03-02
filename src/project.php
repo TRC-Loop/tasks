@@ -137,7 +137,7 @@ if (!empty($search_term)) {
               <div class="card-body">
                 <h5 class="card-title"><?php echo htmlspecialchars($section["name"]); ?></h5>
                 <a href="section.php?project_uuid=<?php echo htmlspecialchars($project_uuid); ?>&section_uuid=<?php echo htmlspecialchars($section["uuid"]); ?>"
-                  class="btn btn-primary">View Section</a>
+                  class="btn btn-primary"><i class="ti ti-eye" style="margin-right: 2px;"></i>View Tasks</a>
 
                 <!-- Delete Button -->
                 <button class="btn btn-danger ms-2" data-bs-toggle="modal"
