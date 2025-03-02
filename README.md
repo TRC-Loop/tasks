@@ -13,7 +13,7 @@ Tasks is a basic, file-based task management application built with PHP, Bootstr
 *   **Task Management:** Add, view, delete, and mark tasks as complete.
 *   **Search:** Quickly find projects, sections, or tasks using the built-in search functionality.
 *   **User-Friendly Interface:** Clean and intuitive design using Bootstrap 5 and Tabler Icons.
-*   **File-Based Storage:** No database required; data is stored in a simple JSON file.
+*   **File-Based Storage:** Data is stored in a simple SQLite3 DB file.
 
 ## Installation
 
