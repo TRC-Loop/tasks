@@ -124,10 +124,11 @@ function create_todo(string $project_uuid, string $section_uuid, string $name) {
 
 function delete_todo(string $project_uuid, string $section_uuid, string $todo_uuid) {
     $db = get_db_connection_projects();
-    $stmt = $db->prepare("UPDATE todos SET deleted = 1 WHERE uuid = ?");
+    $stmt = $db->prepare("DELETE FROM todos WHERE uuid = ?");
     $stmt->bindValue(1, $todo_uuid);
     $stmt->execute();
 }
+
 
 function mark_todo_done(string $project_uuid, string $section_uuid, string $todo_uuid) {
     $db = get_db_connection_projects();
