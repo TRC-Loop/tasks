@@ -152,7 +152,7 @@ $no_projects = empty($projects);
   <!-- If there are no projects, show the arrow and text -->
   <?php if ($no_projects): ?>
     <div class="arrow-pointer">
-      Start by creating a new project!
+      Start by creating a new project! (Here you'll also create Sections & Todos!)
       <p style="rotate: -45deg; font-size: 40px;">↓</p>
     </div>
   <?php endif; ?>
