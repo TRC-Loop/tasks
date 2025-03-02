@@ -49,47 +49,22 @@ if (
 }
 
 // Handle marking todo as done (or not done)
+// Handle marking todo as done (or not done)
 if (
   $_SERVER["REQUEST_METHOD"] === "POST" &&
   isset($_POST["complete_todo"]) &&
   isset($_POST["todo_uuid"])
 ) {
   $todo_uuid = $_POST["todo_uuid"];
-  $completed = isset($_POST["completed"]); // Check if checkbox is checked
+  $completed = isset($_POST["completed"]) && $_POST["completed"] == "1"; // 1 for completed, 0 for not completed
 
-  // Find the todo and update its completion status
-  $projects = get_all_projects();
-  foreach ($projects as $project_key => $project) {
-    if ($project["uuid"] === $project_uuid) {
-      foreach ($project["sections"] as $section_key => $section) {
-        if ($section["uuid"] === $section_uuid) {
-          foreach ($section["todos"] as $todo_key => $todo) {
-            if ($todo["uuid"] === $todo_uuid) {
-              $projects[$project_key]["sections"][$section_key]["todos"][$todo_key]["completed"] = $completed;
-              $projects[$project_key]["sections"][$section_key]["todos"][$todo_key]["completed_when"] = $completed
-                ? date("Y-m-d H:i:s")
-                : ""; // Clear completed_when if not completed
-              file_put_contents(
-                $file,
-                json_encode($projects, JSON_PRETTY_PRINT)
-              ); // Save changes immediately
-              goto end_complete; // Exit all loops
-            }
-          }
-        }
-      }
-    }
-  }
+  // Update the todo completion status in the database
+  mark_todo_done($project_uuid, $section_uuid, $todo_uuid, $completed);
 
-  end_complete: // Label to jump to
-  header(
-    "Location: section.php?project_uuid=" .
-      urlencode($project_uuid) .
-      "&section_uuid=" .
-      urlencode($section_uuid)
-  );
+  header("Location: section.php?project_uuid=" . urlencode($project_uuid) . "&section_uuid=" . urlencode($section_uuid));
   exit();
 }
+
 
 // Get all todos for the section
 $todos = get_all_todos($project_uuid, $section_uuid);
@@ -134,6 +109,7 @@ if (!$section) {
   die("Section not found.");
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

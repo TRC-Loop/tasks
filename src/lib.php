@@ -1,32 +1,37 @@
 <?php
 require_once "config.php";
 
-// Start the session only if it's not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-class ToDoData {
-    public string $name;
-    public string $uuid;
-    public ?bool $completed = false;
-    public string $created;
-    public string $completed_when;
-    public ?bool $deleted = false;
-}
-
-class SectionData {
-    public ?array $todos = [];
-    public string $uuid;
-    public string $name;
-    public string $created;
-}
-
-class ProjectData {
-    public ?array $sections = [];
-    public string $name;
-    public string $created;
-    public string $uuid;
+function get_db_connection() {
+  global $PROJECTS_DB;
+    $db = new SQLite3($PROJECTS_DB);
+    $db->exec("CREATE TABLE IF NOT EXISTS projects (
+        uuid TEXT PRIMARY KEY,
+        name TEXT,
+        created TEXT,
+        user_id INTEGER
+    )");
+    $db->exec("CREATE TABLE IF NOT EXISTS sections (
+        uuid TEXT PRIMARY KEY,
+        name TEXT,
+        created TEXT,
+        project_uuid TEXT,
+        FOREIGN KEY (project_uuid) REFERENCES projects(uuid) ON DELETE CASCADE
+    )");
+    $db->exec("CREATE TABLE IF NOT EXISTS todos (
+        uuid TEXT PRIMARY KEY,
+        name TEXT,
+        created TEXT,
+        completed BOOLEAN,
+        completed_when TEXT,
+        deleted BOOLEAN,
+        section_uuid TEXT,
+        FOREIGN KEY (section_uuid) REFERENCES sections(uuid) ON DELETE CASCADE
+    )");
+    return $db;
 }
 
 function generate_uuid(): string {
@@ -34,237 +39,122 @@ function generate_uuid(): string {
 }
 
 function create_project(string $name, int $user_id) {
-    global $file;
-    
-    // Load existing projects safely
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    if (!is_array($projects)) {
-        $projects = []; // Ensure it's an array to prevent data loss
-    }
-
-    // Append the new project
-    $project = [
-        "name" => $name,
-        "created" => date("Y-m-d H:i:s"),
-        "uuid" => generate_uuid(),
-        "user_id" => $user_id,
-        "sections" => []
-    ];
-    
-    $projects[] = $project;
-
-    // Save updated data
-    file_put_contents($file, json_encode($projects, JSON_PRETTY_PRINT));
+    $db = get_db_connection();
+    $stmt = $db->prepare("INSERT INTO projects (uuid, name, created, user_id) VALUES (?, ?, ?, ?)");
+    $uuid = generate_uuid();
+    $stmt->bindValue(1, $uuid);
+    $stmt->bindValue(2, $name);
+    $stmt->bindValue(3, date("Y-m-d H:i:s"));
+    $stmt->bindValue(4, $user_id);
+    $stmt->execute();
 }
-
 
 function get_all_projects() {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return []; // Return an empty array if user_id is not set
-    }
+    if (!isset($_SESSION["user_id"])) return [];
 
-    $user_id = $_SESSION["user_id"]; // Get the user_id from the session
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    return array_filter($projects, fn($p) => $p["user_id"] === $user_id);
+    $db = get_db_connection();
+    $stmt = $db->prepare("SELECT * FROM projects WHERE user_id = ?");
+    $stmt->bindValue(1, $_SESSION["user_id"]);
+    $result = $stmt->execute();
+    $projects = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $projects[] = $row;
+    }
+    return $projects;
 }
 
-
 function get_all_sections(string $project_uuid) {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return []; // Return an empty array if user_id is not set
+    $db = get_db_connection();
+    $stmt = $db->prepare("SELECT * FROM sections WHERE project_uuid = ?");
+    $stmt->bindValue(1, $project_uuid);
+    $result = $stmt->execute();
+    $sections = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $sections[] = $row;
     }
-
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    foreach ($projects as $project) {
-        if ($project["uuid"] === $project_uuid) {
-            return $project["sections"];
-        }
-    }
-    return [];
+    return $sections;
 }
 
 function get_all_todos(string $project_uuid, string $section_uuid) {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return []; // Return an empty array if user_id is not set
+    $db = get_db_connection();
+    $stmt = $db->prepare("SELECT * FROM todos WHERE section_uuid = ?");
+    $stmt->bindValue(1, $section_uuid);
+    $result = $stmt->execute();
+    $todos = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $todos[] = $row;
     }
-
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    foreach ($projects as $project) {
-        if ($project["uuid"] === $project_uuid) {
-            foreach ($project["sections"] as $section) {
-                if ($section["uuid"] === $section_uuid) {
-                    return $section["todos"];
-                }
-            }
-        }
-    }
-    return [];
+    return $todos;
 }
 
-function delete_project(string $uuid, string $user_id) {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return; // Exit function if user_id is not set
-    }
-
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    $projects = array_filter($projects, fn($p) => !($p["uuid"] === $uuid && $p["user_id"] === $user_id));
-
-    file_put_contents($file, json_encode(array_values($projects), JSON_PRETTY_PRINT));
+function delete_project(string $uuid, int $user_id) {
+    $db = get_db_connection();
+    $stmt = $db->prepare("DELETE FROM projects WHERE uuid = ? AND user_id = ?");
+    $stmt->bindValue(1, $uuid);
+    $stmt->bindValue(2, $user_id);
+    $stmt->execute();
 }
 
-function create_section(string $project_uuid, string $project_name) {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return; // Exit function if user_id is not set
-    }
-
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    foreach ($projects as &$project) {
-        if ($project["uuid"] === $project_uuid) {
-            $section = [
-                "name" => $project_name,
-                "uuid" => generate_uuid(),
-                "created" => date("Y-m-d H:i:s"),
-                "todos" => []
-            ];
-            $project["sections"][] = $section;
-            break;
-        }
-    }
-    file_put_contents($file, json_encode($projects, JSON_PRETTY_PRINT));
+function create_section(string $project_uuid, string $name) {
+    $db = get_db_connection();
+    $stmt = $db->prepare("INSERT INTO sections (uuid, name, created, project_uuid) VALUES (?, ?, ?, ?)");
+    $stmt->bindValue(1, generate_uuid());
+    $stmt->bindValue(2, $name);
+    $stmt->bindValue(3, date("Y-m-d H:i:s"));
+    $stmt->bindValue(4, $project_uuid);
+    $stmt->execute();
 }
 
 function delete_section(string $project_uuid, string $section_uuid) {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return; // Exit function if user_id is not set
-    }
-
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    foreach ($projects as &$project) {
-        if ($project["uuid"] === $project_uuid) {
-            $project["sections"] = array_filter($project["sections"], fn($s) => $s["uuid"] !== $section_uuid);
-            break;
-        }
-    }
-    file_put_contents($file, json_encode($projects, JSON_PRETTY_PRINT));
+    $db = get_db_connection();
+    $stmt = $db->prepare("DELETE FROM sections WHERE uuid = ?");
+    $stmt->bindValue(1, $section_uuid);
+    $stmt->execute();
 }
 
 function create_todo(string $project_uuid, string $section_uuid, string $name) {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return; // Exit function if user_id is not set
-    }
-
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    foreach ($projects as &$project) {
-        if ($project["uuid"] === $project_uuid) {
-            foreach ($project["sections"] as &$section) {
-                if ($section["uuid"] === $section_uuid) {
-                    $todo = [
-                        "name" => $name,
-                        "uuid" => generate_uuid(),
-                        "created" => date("Y-m-d H:i:s"),
-                        "completed" => false,
-                        "completed_when" => "",
-                        "deleted" => false
-                    ];
-                    $section["todos"][] = $todo;
-                    break 2;
-                }
-            }
-        }
-    }
-    file_put_contents($file, json_encode($projects, JSON_PRETTY_PRINT));
+    $db = get_db_connection();
+    $stmt = $db->prepare("INSERT INTO todos (uuid, name, created, completed, completed_when, deleted, section_uuid) VALUES (?, ?, ?, 0, '', 0, ?)");
+    $stmt->bindValue(1, generate_uuid());
+    $stmt->bindValue(2, $name);
+    $stmt->bindValue(3, date("Y-m-d H:i:s"));
+    $stmt->bindValue(4, $section_uuid);
+    $stmt->execute();
 }
 
 function delete_todo(string $project_uuid, string $section_uuid, string $todo_uuid) {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return; // Exit function if user_id is not set
-    }
-
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-    
-    foreach ($projects as &$project) {
-        if ($project["uuid"] === $project_uuid) {
-            foreach ($project["sections"] as &$section) {
-                if ($section["uuid"] === $section_uuid) {
-                    foreach ($section["todos"] as &$todo) {
-                        if ($todo["uuid"] === $todo_uuid) {
-                            $todo["deleted"] = true;
-                            break 3;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    file_put_contents($file, json_encode($projects, JSON_PRETTY_PRINT));
+    $db = get_db_connection();
+    $stmt = $db->prepare("UPDATE todos SET deleted = 1 WHERE uuid = ?");
+    $stmt->bindValue(1, $todo_uuid);
+    $stmt->execute();
 }
 
 function mark_todo_done(string $project_uuid, string $section_uuid, string $todo_uuid) {
-    global $file;
-    
-    // Ensure the user_id exists in the session before using it
-    if (!isset($_SESSION["user_id"])) {
-        error_log("user_id is not set in the session.");
-        return; // Exit function if user_id is not set
-    }
+    $db = get_db_connection();
 
-    $projects = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
+    // Check current completion status
+    $stmt = $db->prepare("SELECT completed FROM todos WHERE uuid = ?");
+    $stmt->bindValue(1, $todo_uuid, SQLITE3_TEXT);
+    $result = $stmt->execute();
     
-    foreach ($projects as &$project) {
-        if ($project["uuid"] === $project_uuid) {
-            foreach ($project["sections"] as &$section) {
-                if ($section["uuid"] === $section_uuid) {
-                    foreach ($section["todos"] as &$todo) {
-                        if ($todo["uuid"] === $todo_uuid) {
-                            $todo["completed"] = true;
-                            $todo["completed_when"] = date("Y-m-d H:i:s");
-                            break 3;
-                        }
-                    }
-                }
-            }
+    // Fetch the result using fetchArray
+    $todo = $result->fetchArray(SQLITE3_ASSOC);
+
+    if ($todo) {
+        // Toggle completion status
+        if ($todo['completed'] == 1) {
+            // If already marked, demark it
+            $stmt = $db->prepare("UPDATE todos SET completed = 0, completed_when = NULL WHERE uuid = ?");
+            $stmt->bindValue(1, $todo_uuid, SQLITE3_TEXT);
+        } else {
+            // If not marked, mark it as completed
+            $stmt = $db->prepare("UPDATE todos SET completed = 1, completed_when = ? WHERE uuid = ?");
+            $stmt->bindValue(1, date("Y-m-d H:i:s"), SQLITE3_TEXT);
+            $stmt->bindValue(2, $todo_uuid, SQLITE3_TEXT);
         }
+
+        $stmt->execute();
     }
-    file_put_contents($file, json_encode($projects, JSON_PRETTY_PRINT));
 }
+
 ?>
